@@ -1,0 +1,16 @@
+{
+    "contents" : "#path 修改为储存的文件夹\nsetwd(\"F:\\\\team4share\\\\实盘策略\\\\实盘记录\\\\zz8005-alpha1\\\\2015-4-8\")\n\n#修改股票代码函数\ntran=function(x) {\n  n=length(x)\n  xx=NULL\n  for(i in 1:n) {\n    a=x[i]\n    if(a<600000) {\n      m=nchar(a)\n      m=6-m;\n      if(m!=0){\n        for(j in 1:m) {\n          a=paste(0,a,sep=\"\")\n        }\n      }    \n      a=paste(a,\".SZ\",sep=\"\")\n    }\n    if(a==600000) { a=paste(\"600000\",\".SH\",sep=\"\") }\n    if(a>600000) {a=paste(a,\".SH\",sep=\"\") }\n    a=as.character(a)\n    xx=c(xx,a)\n  }\n  return(xx)\n}\n\n#读入当日平开信息\norigin<-read.csv(file=\"alpha1-已平仓.csv\")\n\nif(is.element(\"IF1506\",origin[,\"STOCK_CODE\"])){\n  origin<-origin[1:nrow(origin)-1,]\n}\n\nif(origin[1,\"REMARK\"]==1){\n  direction<-\"卖出\"\n  price<-\"STOP_PRICE\"\n  origin<-origin[-which(origin[,price]==0),]\n  name<-\"已平\"\n}else{\n  direction<-\"买入\"\n  price<-\"DETAIL_VALUE\"\n  name<-\"新开\"\n}\n\ncode<-as.numeric(as.character(origin[,\"STOCK_CODE\"]))\ncode<-tran(code)\nwind<-data.frame(code,origin[,\"STK_AMOUNT\"])\nwind[,3]<-format(Sys.Date(), \"%Y/%m/%d\")\nwind[,4]<-origin[,price]\nwind[,5]<-\"股票\"\nwind[,6]<-direction\nnames(wind)<-c(\"证券代码\",\"买卖数量\",\"买卖日期\",\"买卖价格\",\"证券类型\",\"买卖方向\")\nwrite.csv(wind,file=paste(Sys.Date(),\"-\",name,\".csv\",sep=\"\"),row.names=F)\n",
+    "created" : 1429076575809.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2752983581",
+    "id" : "262385CD",
+    "lastKnownWriteTime" : 1428992581,
+    "path" : "E:/ZDQH/git/multifactoralpha/forwind.R",
+    "project_path" : null,
+    "properties" : {
+    },
+    "source_on_save" : false,
+    "type" : "r_source"
+}

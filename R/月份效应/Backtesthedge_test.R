@@ -1,0 +1,15 @@
+caplist_hs300_month_amt=Backtesthedge2(30000000,0.80,0.9,stock_pick,0.00035,0.00003,0.001,0.002,0.00017,lastday)
+rm(list=ls(all=TRUE))
+cap=30000000
+Invr=0.8
+beta=0.9
+stock=stock_pick
+fee.ratio1=0.00035
+fee.ratio2=0.00003
+tax.ratio=0.001
+impact.ratio1=0.002
+impact.ratio2=0.00017
+lastday="2015-04-16"
+bili=0.05
+hs300if="hs300if0930"
+zz500ic="zz500ic0915"

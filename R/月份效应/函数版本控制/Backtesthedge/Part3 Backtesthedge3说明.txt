@@ -1,0 +1,9 @@
+Backtesthedge3应用举例：
+lastday="2015-04-08"
+beta=0.9
+bili=0.05
+caplist_hs300_month_amt=Backtesthedge3(30000000,0.80,beta,stock_pick,0.00035,0.00003,0.001,0.002,0.00017,lastday,bili)
+caplist1=caplist_hs300_month_amt[[1]];
+本函数在原有函数基础上进行了以下两个变动：
+1，将caplist的返回值能够跑到当天；
+2，构建股票组合时，如果当天的成交额低于前90天成交额平均值的5% ，则认为其买不进，要将其权重分配到其他股票上面

@@ -1,0 +1,16 @@
+{
+    "contents" : "setwd(\"F:/team4share/实盘策略/多因子选股模块/code\")\nsource(\"f-getdata.R\")\nsource(\"newdata.R\")\nsource('f-factorpick.R')\nsource('f-stockpick.R')\nsource('stockpickresult.R')\n\n#设定区间，起点，股票池\nTT<-length(chg_date)\nL<-24  #筛选因子的所用数据长度\nH<-3   #因子有效期\nO<-79   #起点\nOs<-seq(O,TT-L+1,H)\nspool<-zz800\n\nif(setequal(spool,zz300)){\n  poolname<-\"-hs300\"\n  top<-0.8\n  topb<-1\n  percent<-top*100\n}\nif(setequal(spool,zz800)){\n  poolname<-\"-zz800\"\n  top<-0.05\n  topb<-1\n  percent<-top*100\n}\n\n#存储选股结果，期数\nlist<-stockpickresult(Os,spool,top)\nstock_pick<-list[[1]]\nmark<-list[[2]]\n\n#O=1 存储历史至今每期选股\n#else 存储当期选股以及备选股 \nif(O==1){\n  save(stock_pick,file=paste(\"Z:\\\\实盘策略\\\\多因子选股模块\\\\RData\\\\\",poolname,percent,\"-all-\",mark,\".RData\"sep=\"\")) \n}else{\n  stock_pick<-stock_pick[length(stock_pick)]\n  save(stock_pick,file=paste(\"Z:\\\\实盘策略\\\\多因子选股模块\\\\RData\\\\\",names(stock_pick),\"-\",poolname,percent,\"-\",mark,\".RData\",sep=\"\")) \n  stock_pick_backup<-stockpickresult(Os,spool,topb)[[1]]\n  stock_pick_backup<-stock_pick_backup[[length(stock_pick_backup)]]\n  stock_pick_backup[which(is.element(stock_pick_backup[,1],stock_pick[[1]][,1])),\"5%\"]<-1\n  stock_pick_backup[which(!is.element(stock_pick_backup[,1],stock_pick[[1]][,1])),\"5%\"]<-0 \n  \n  filename<-paste(\"Z:\\\\实盘策略\\\\多因子选股模块\\\\数据集\\\\策略选股\\\\\",names(stock_pick),poolname,percent,sep=\"\")\n  if(!file.exists(filename)){\n    dir.create(filename)\n  }\n  \n  stock_pick<-stock_pick[[1]]\n  stock_pick<-stock_pick[-which(stock_pick[\"weight\"]==0),]\n  write.csv(stock_pick[,1:2],file=paste(filename,\"\\\\\",Sys.Date(),poolname,percent,\".csv\",sep=\"\"),row.names=F)\n  write.csv(stock_pick_backup,file=paste(filename,\"\\\\\",Sys.Date(),poolname,percent,\"-backup.csv\",sep=\"\"),row.names=F)\n\n}\n\n\n\n\n\n# 1.起始资本 2.起始投资比例（默认0.8可能变化） 3.对冲比例 4.每日选股 5.股票手续费 6.期货手续费 7.印花税 8.股票冲击成本 9.期货的冲击成本 10.额外天数\n#caplist1<-Backtesthedge(30000000,0.80,0.9,stock_pick,0.00035,0.00003,0.001,0.003,0.00017,30)\n\n\n\n",
+    "created" : 1429062978911.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1773324334",
+    "id" : "579ACE9F",
+    "lastKnownWriteTime" : 1428975465,
+    "path" : "Z:/实盘策略/多因子选股模块/code/main.R",
+    "project_path" : "main.R",
+    "properties" : {
+    },
+    "source_on_save" : false,
+    "type" : "r_source"
+}

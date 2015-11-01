@@ -1,0 +1,142 @@
+#研报:风格轮动系列专题之二——宏观事件驱动下的风格轮动
+library("WindR")
+w.start(showmenu=F)
+#国民经济核算、工业指标
+gdp<-w.edb('M0039354','2004-12-01','2015-10-01','')$Data#GDP同比
+colnames(gdp)<-c("date","gdp")
+ind<-w.edb('M0000545','2004-12-01','2015-10-01','')$Data#工业增加值同比
+colnames(ind)<-c("date","ind")
+ele<-w.edb('S0027013','2004-12-01','2015-10-12','')$Data#发电量同比
+colnames(ele)<-c("date","ele")
+#价格指标
+cpi<-w.edb('M0000612','2004-12-01','2015-10-12','')$Data#CPI
+colnames(cpi)<-c("date","cpi")
+ppi<-w.edb('M0001227','2004-12-01','2015-10-12','')$Data#PPi
+colnames(ppi)<-c("date","ppi")
+rpi<-w.edb('M0001022','2004-12-01','2015-10-12','')$Data#RPI
+colnames(rpi)<-c("date","rpi")
+#预期数据
+pre1<-w.edb('M0061675','2008-01-01','2015-10-01','')$Data#预期工业增加值
+colnames(pre1)<-c("date","pre1")
+pre2<-w.edb('M0061676','2007-12-01','2015-10-01','')$Data#预期CPI
+colnames(pre2)<-c("date","pre2")
+pre3<-w.edb('M0061677','2008-02-01','2015-10-01','')$Data#预期PPI
+colnames(pre3)<-c("date","pre3")
+pre4<-w.edb('M0061683','2007-12-01','2015-10-01','')$Data#预期M2
+colnames(pre4)<-c("date","pre4")
+#对外投资
+port<-w.edb('M0000604','2004-12-01','2015-10-01','')$Data#进出口总额
+colnames(port)<-c("date","port")
+import<-w.edb('M0000608','2004-12-01','2015-10-01','')$Data#进口总额
+colnames(import)<-c("date","import")
+export<-w.edb('M0000606','2004-12-01','2015-10-01','')$Data#出口总额
+colnames(export)<-c("date","export")
+#货币供应
+m0<-w.edb('M0001380','2004-12-01','2015-10-01','')$Data#M0
+colnames(m0)<-c("date","m0")
+m1<-w.edb('M0001382','2004-12-01','2015-10-01','')$Data#M1
+colnames(m1)<-c("date","m1")
+m2<-w.edb('M0001384','2004-12-01','2015-10-01','')$Data#M2
+colnames(m2)<-c("date","m2")
+#景气指数
+index1<-w.edb('M0041339','2004-12-01','2015-10-01','')$Data#宏观经济预警指数
+colnames(index1)<-c("date","index1")
+index2<-w.edb('M0041341','2004-12-01','2015-10-01','')$Data#宏观经济先行指数
+colnames(index2)<-c("date","index2")
+index3<-w.edb('M0012303','2004-12-01','2015-10-01','')$Data#消费者信心指数
+colnames(index3)<-c("date","index3")
+index4<-w.edb('M0012293','2004-12-01','2015-10-01','')$Data#企业家信心指数（季度）
+colnames(index4)<-c("date","index4")
+#PMI  缺少汇丰
+pmi1<-w.edb('M0017126','2004-12-01','2015-10-01','')$Data#PMI
+colnames(pmi1)<-c("date","pmi1")
+pmi2<-w.edb('M0048236','2004-12-01','2015-10-01','')$Data#非制造业商务活动PMI
+colnames(pmi2)<-c("date","pmi2")
+pmi3<-w.edb('M0000138','2004-12-01','2015-10-01','')$Data#财新中国PMI
+colnames(pmi3)<-c("date","pmi3")
+pmi4<-w.edb('M0061603','2004-12-01','2015-10-01','')$Data#财新中国服务业PMI
+colnames(pmi4)<-c("date","pmi4")
+#市场情绪
+pe1<-w.edb('M0010344','2004-12-01','2015-10-01','')$Data#上证A股平均市盈率
+colnames(pe1)<-c("date","pe1")
+pe2<-w.edb('M0010364','2004-12-01','2015-10-01','')$Data#深证A股平均市盈率
+colnames(pe2)<-c("date","pe2")
+
+chg1<-w.edb('M0024230','2004-12-01','2015-10-01','')$Data#总市值
+colnames(chg1)<-c("date","chg1")
+chg2<-w.edb('M0024231','2004-12-01','2015-10-01','')$Data#流通市值
+colnames(chg2)<-c("date","chg2")
+chg3<-w.edb('M0024232','2004-12-01','2015-10-01','')$Data#总股本
+colnames(chg3)<-c("date","chg3")
+chg4<-w.edb('M0024300','2004-12-01','2015-10-01','')$Data#日均成交数量
+colnames(chg4)<-c("date","chg4")
+
+avg<-w.edb('M0024296','2004-12-01','2015-10-01','')$Data#日均成交金额
+colnames(avg)<-c("date","avg")
+open<-w.edb('M0010373','2004-12-01','2015-10-01','')$Data#A股帐户新增开户数
+colnames(open)<-c("date","open")
+
+date<-cpi[1]
+mat<-matrix(nrow=130,ncol=32)
+
+wash<-function(data,n,mat){
+  for(i in 1:130){
+    if(date[i,1] %in% data[,1]){
+      mat[i,n]<<-data[which(date[i,1]==data[,1]),2]
+    } 
+  }
+}
+
+wash(gdp,1,mat)
+wash(ind,2,mat)
+wash(ele,3,mat)
+wash(cpi,4,mat)
+wash(ppi,5,mat)
+wash(rpi,6,mat)
+wash(pre1,7,mat)
+wash(pre2,8,mat)
+wash(pre3,9,mat)
+wash(pre4,10,mat)
+wash(port,11,mat)
+wash(import,12,mat)
+wash(export,13,mat)
+wash(m0,14,mat)
+wash(m1,15,mat)
+wash(m2,16,mat)
+wash(index1,17,mat)
+wash(index2,18,mat)
+wash(index3,19,mat)
+wash(index4,20,mat)
+wash(pmi1,21,mat)
+wash(pmi2,22,mat)
+wash(pmi3,23,mat)
+wash(pmi4,24,mat)
+wash(pe1,25,mat)
+wash(pe2,26,mat)
+wash(chg1,27,mat)
+wash(chg2,28,mat)
+wash(chg3,29,mat)
+wash(chg4,30,mat)
+wash(avg,31,mat)
+wash(open,32,mat)
+
+for(i in 1:dim(date)[1]){
+  if(is.na(mat[i,1])){
+    mat[i,1]<-mat[(i-1),1]
+  }
+  if(is.na(mat[i,20])){
+    mat[i,20]<-mat[(i-1),20]
+  }
+}
+
+data<-matrix(nrow = 130,ncol = 31)
+data[,1:3]<-mat[,1:3]
+data[,4]<-mat[,2]-mat[,7]
+data[,5:7]<-mat[,4:6]
+data[,8]<-mat[,4]-mat[,8]
+data[,9]<-mat[,5]-mat[,9]
+data[,10:12]<-mat[,8:10]
+data[,13:15]<-mat[,11:13]
+data[,16:28]<-mat[,14:26]
+data[,29]<-mat[,27]*mat[,30]/(mat[,28]*mat[,29])
+data[,30:31]<-mat[,31:32]

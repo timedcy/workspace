@@ -1,0 +1,16 @@
+{
+    "contents" : "##本部分实现的功能是计算浮动权重\n##填写建仓日和计算当日\nrm(list=ls(all=TRUE));\nstart=\"2015-04-01\"\nend=\"2015-04-21\"\n\nsetwd(\"D:/zdqh/实盘策略/多因子选股模块/数据集/处理后选股/2015-04-21Alpha策略-王政4\")\n\nreweight<-function(trade,start,end,name){\n  library(RODBC)\n  ch<-odbcConnect(\"winddata\",uid=\"root\",pwd=\"123\");\n  sql1<-paste(\"select trade_code,datetime,open,high,low,close from dailyprice where datetime=\",\"'\",start,\"'\",sep=\"\")\n  sql2<-paste(\"select trade_code,datetime,open,high,low,close from dailyprice where datetime=\",\"'\",end,\"'\",sep=\"\")\n  price1<-sqlQuery(ch,sql1)\n  price2<-sqlQuery(ch,sql2)\n  price1<-price1[,c(\"trade_code\",\"close\")]\n  price2<-price2[,c(\"trade_code\",\"close\")]\n  price<-merge(price1,price2,by=\"trade_code\")\n  colnames(price)<-c(\"trade_code\",\"price1\",\"price2\")\n  \n  linshi<-merge(trade,price,by=\"trade_code\")\n  linshi[,\"weight2\"]<-linshi[,\"weight\"]*linshi[,\"price2\"]/linshi[,\"price1\"]\n  linshi[,\"weight2\"]<-linshi[,\"weight2\"]/sum(linshi[,\"weight2\"])\n  sign<-which(is.element(names(linshi),c(\"weight\",\"price1\",\"price2\")))\n  linshi<-linshi[,-sign]\n  #linshi<-linshi[,-c(\"weight\",\"price1\",\"price2\")]\n  \n  #colnames(linshi)<-c(\"trade_code\",\"weight\")\n  after_weight_adjust<-linshi\n  #name=paste(\"after_weight_adjust-alpha4\",\"-\",as.character(Sys.Date()),\".csv\",sep=\"\")\n  #write.csv(after_weight_adjust,file=name,row.names=F)\n  return(after_weight_adjust)\n}\n\ntrade1<-read.csv(\"Alpha4-2015-04-20.csv\");\nname1<-\"Alpha策略-王政1-浮动后.csv\";\ntrade2<-read.csv(\"Alpha4-2015-04-20-backup.csv\");\nname2<-\"Alpha策略-王政1back-浮动后.csv\";\nfile1<-reweight(trade1,start,end,name1);\ncolnames(file1)<-c(\"trade_code\",\"weight\")\nwrite.csv(file1,file=name1,row.names=F)\nfile2<-reweight(trade2,start,end,name2);\ncolnames(file2)<-c(\"trade_code\",\"industry\",\"mark\",\"weight\")\nwrite.csv(file2,file=name2,row.names=F)\n\n\n",
+    "created" : 1429607864918.000,
+    "dirty" : true,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1955385188",
+    "id" : "48920A78",
+    "lastKnownWriteTime" : 1429617343,
+    "path" : "D:/zdqh/实盘策略/多因子选股模块/code/weight_adjust.R",
+    "project_path" : null,
+    "properties" : {
+    },
+    "source_on_save" : false,
+    "type" : "r_source"
+}

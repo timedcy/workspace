@@ -1,0 +1,16 @@
+{
+    "contents" : "setwd(\"D:/zdqh/实盘策略/多因子选股模块/code\")\n\nsource('f-stop.R');\n\nsetweight <- function(stockpick,stopstock){\n  \n  #stopstock<- stopstock[,c(\"日期\",\"Wind代码\")]\n  #colnames(stopstock)<-c('tradeday','trade_code')\n  #colnames(stockpick)<-c('trade_code','weight')  \n  stops <- merge(stockpick,stopstock,by='trade_code')\n  \n  if(nrow(stops)>0){   \n    \n  stockpick<-stockpick[-which(is.element(stockpick[,'trade_code'],stops[,'trade_code'])),]\n#     for(i in stops[,'trade_code']){\n#       stockpick<-stockpick[-which(stockpick[,'trade_code']==i),]\n#     }\n    sum<-sum(stockpick[,\"weight\"])\n    stockpick['weight']<-stockpick['weight']/sum\n  }\n  \n  return(stockpick)\n}\n\n#*******************************\n#function for generate list\n#********************************\n\ngenerate<-function(stockpick,stockpickbackup,names){\n  stockrew<- setweight(stockpick,stopstock);\n  backuprew<- setweight(stockpickbackup,stopstock);\n  \n  filename<-paste(\"D:\\\\zdqh\\\\实盘策略\\\\多因子选股模块\\\\数据集\\\\处理后选股\\\\\",Sys.Date(),names,sep=\"\");\n  if(!file.exists(filename)){\n    dir.create(filename)\n  }\n  setwd(filename);\n  save(stockrew,file=paste(names,\"wts.RData\",sep=\"\"));\n  save(backuprew,file=paste(names,\"backupwts.RData\",sep=\"\"));\n  write.csv(stockrew,file=paste(names,\"wts.csv\",sep=\"\"),row.names=FALSE)\n  write.csv(backuprew,file=paste(names,\"backupwts.csv\",sep=\"\"),row.names=FALSE)\n  \n  stockc<-as.factor(stockrew[,1])\n  stockn<-as.factor('证券')\n  amount<-as.integer(0)\n  weight<-as.numeric(stockrew[,2])\n  data<-data.frame(证券代码=stockrew[,1],证券名称=stockn,目标数量=amount,目标权重=weight)\n  \n  write.csv(data,file=paste(file=paste(names,\".csv\",sep=\"\")),row.names=F,quote = F)\n}\n\n\n\n#读取停牌数据\n# date<-Sys.Date();\n# #date<-as.Date(\"2015-03-27\")\n# stopstock<-getstops(date);\nstopstock<-read.csv(file=\"D:\\\\zdqh\\\\实盘策略\\\\多因子选股模块\\\\停牌数据\\\\2015-04-21.csv\")\ncolnames(stopstock)<-c('tradeday','trade_code')\n#write.csv(stopstock,file=paste(\"D:\\\\zdqh\\\\实盘策略\\\\多因子选股模块\\\\停牌数据\\\\\",date,\".csv\",sep=\"\"),row.names=F);\nsetwd(\"D:\\\\zdqh\\\\实盘策略\\\\多因子选股模块\\\\数据集\\\\处理后选股\\\\2015-04-21Alpha策略-王政4\")\nnames<-\"Alpha策略-王政4-421\";\nzz800pick<-read.csv(\"Alpha策略-王政4-浮动后.csv\",stringsAsFactors=F);\nzz800pick[,\"weight\"]<-as.numeric(zz800pick[,\"weight\"])\nzz800pickbackup<-read.csv(\"Alpha策略-王政4back-浮动后.csv\",stringsAsFactors=F);\nzz800pickbackup[,\"weight\"]<-as.numeric(zz800pickbackup[,\"weight\"])\ngenerate(zz800pick,zz800pickbackup,names);\n\n# names<-\"Alpha策略-王政7\";\n# hs300pick<-read.csv(\"Z:/实盘策略/多因子选股模块/数据集/策略选股/2015-03-26-hs30080/2015-03-26-hs30080.csv\")\n# hs300pickbackup<-read.csv(\"Z:/实盘策略/多因子选股模块/数据集/策略选股/2015-03-26-hs30080/2015-03-26-hs30080-backup.csv\")\n# generate(hs300pick,hs300pickbackup,names);\n\n",
+    "created" : 1429607849392.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2289828852",
+    "id" : "4EF2F904",
+    "lastKnownWriteTime" : 1429617764,
+    "path" : "D:/zdqh/实盘策略/多因子选股模块/code/stopstockreweight.R",
+    "project_path" : null,
+    "properties" : {
+    },
+    "source_on_save" : false,
+    "type" : "r_source"
+}

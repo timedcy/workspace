@@ -1,0 +1,16 @@
+{
+    "contents" : "library(\"WindR\", lib.loc=\"C:/Program Files/R/R-3.1.1/library\")\nw.start()\nw_tdays_data<-w.tdays(\"2015-03-27\",\"2015-12-30\")$Data[,1]\nn<-length(w_tdays_data)\norder<-seq(1,n,20)\ntradeday<-w_tdays_data[order]\n# w_tdays_data_next<-w.tdaysoffset(20,\"2015-03-27\")$Data\nw.stop()\n",
+    "created" : 1429084045584.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2262435963",
+    "id" : "F6FDFA4F",
+    "lastKnownWriteTime" : 1429084619,
+    "path" : "Z:/实盘策略/多因子选股模块/code/tradeday.R",
+    "project_path" : "tradeday.R",
+    "properties" : {
+    },
+    "source_on_save" : false,
+    "type" : "r_source"
+}

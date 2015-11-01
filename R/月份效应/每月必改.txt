@@ -1,0 +1,4 @@
+1.everyday 与 tradeday里 mylist=DrawData(starttime=as.Date("2004-12-01"),lengthn=126,industry)
+stock_pick=PortfolioConstruct(mylist,select_industry,start_time="2005-01-01",period=125,yuzhi=6,bili=0.5,pick="hs300weight")
+
+125 与126 每月加一。勿忘

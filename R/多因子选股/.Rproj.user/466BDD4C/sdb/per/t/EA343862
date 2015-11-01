@@ -1,0 +1,22 @@
+{
+    "contents" : "",
+    "created" : 1429616454414.000,
+    "dirty" : false,
+    "encoding" : "",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "EA343862",
+    "lastKnownWriteTime" : 7741240722073845761,
+    "path" : null,
+    "project_path" : null,
+    "properties" : {
+        "caption" : "zz800pickbackup",
+        "contentUrl" : "content?title=zz800pickbackup&file=06c6af2c6b5f44c488761c7a9f7ccfb3.htm",
+        "displayedObservations" : "259",
+        "displayedVariables" : 4,
+        "totalObservations" : "259",
+        "variables" : "4"
+    },
+    "source_on_save" : false,
+    "type" : "r_dataframe"
+}
