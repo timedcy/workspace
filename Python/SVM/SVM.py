@@ -10,107 +10,104 @@ import pandas as pd
 import matplotlib as plt
 import tushare as ts
 from datetime import datetime
+import pymysql
 
-# 连接Wind API
-w.start()
+# 打开数据库连接
+conn = pymysql.connect(host='localhost', user='root', passwd='1735', db='winddata', port=3306, charset='utf8')
+# 使用cursor()方法获取操作游标
+cur = conn.cursor()
 
-tradeday = w.tdays("2010-01-01", "2015-10-12", "").Data[0]
-tradeday = w.tdays("2009-12-31", "2015-10-21", "Period=M")
-
-year = [2009, 2010, 2011, 2012, 2013, 2014, 2015]
-month = list(range(1, 13))
-day = []
-for i in range(len(year)):
-    for j in range(len(month)):
-        day.append(year[i] * 10000 + month[j] * 100 + 1)
-# 取出2010-2015年每月第一天
-oneday = timedelta(days=1)
-# 取出2010-2015年每月最后一天
-yesterday =list(map(lambda x: int((datetime.strptime(str(x), '%Y%m%d') - oneday).strftime("%Y%m%d")), day))
-
-tradeday = day[12:81]
-
-# 取出某个时间点的报告期，前一年或者两年的最后一天
-reportday = list(map(lambda x: (int(str(x)[0:4]) - 1) * 10000 + 1231 if int(str(x)[4:6]) >= 5
-                else (int(str(x)[0:4]) - 2) * 10000 + 1231, yesterday))
+sql = "SELECT DISTINCT datetime FROM dailyprice WHERE datetime >= '2010-01-01'"
+cur.execute(sql)
+day = cur.fetchall()
+n = len(day)
+seq = list(range(1, n, 21))
+tradeday = list(map(lambda x: day[x][0].strftime('%Y-%m-%d'), seq))
 
 stock = {}
 data = {}
 
 for item in tradeday:
-    # 获取不同时间HS300成分股
-    stock[item] = w.wset("IndexConstituent", u"date= %d ;windcode=000300.SH" % item)
+    # 取出数据库中某交易日前的有hs300成分股和权重的日期
+    sql = "SELECT DISTINCT datetime FROM hs300weight WHERE datetime <= %s ORDER BY datetime DESC"
+    cur.execute(sql, item)
+    hs300_day = cur.fetchall()[0][0].strftime('%Y-%m-%d')
+    # 获取具体日期下HS300成分股
+    sql = "SELECT trade_code, weight FROM hs300weight WHERE datetime = %s"
+    cur.execute(sql, hs300_day)
+    stock[item] = list(map(lambda x: (x[0][0:6], x[1]), list(cur.fetchall())))
 
-for i in range(len(tradeday)):
-    # 获取HS300成分股净利润_ttm,市值，企业价值，EBITDAvsEV
-    data[tradeday[i]] = w.wss(stock[tradeday[i]].Data[1], "profit_ttm,ev,ev2,ev2_to_ebitda",u"tradeDate= %d" % yesterday[i+12]).Data
+def getFactor(tradeday, stock, table, factor):
+    # 取出股票因子的数据
+    sql = "SELECT DISTINCT TradingDay FROM %s WHERE TradingDay <= '%s' ORDER BY TradingDay DESC" % (table, tradeday)
+    cur.execute(sql)
+    tradeday = cur.fetchall()[0][0].strftime('%Y-%m-%d')
 
-    # 获取HS300成分股总资产增长率，净利润增长率，资产总计，营业总收入，单季毛利率，单季净利率，单季ROE，单季ROA
-    data[tradeday[i]].extend(w.wss(stock[tradeday[i]].Data[1], "growth_assets,growth_profit,tot_assets,tot_oper_rev,qfa_grossprofitmargin,qfa_netprofitmargin,qfa_roe_deducted,qfa_roa","rptDate=20140331;rptType=1;N=3").Data)
+    sql = "SELECT %s FROM %s WHERE TradingDay = '%s' and SecuCode = %s" % (factor, table, tradeday, '%s')
+    result = []
+    for item in stock:
+        cur.execute(sql, item)
+        temp = cur.fetchone()
+        if temp is None:
+            result.append(np.nan)
+        elif temp[0] is None:
+            result.append(np.nan)
+        else:
+            result.append(temp[0])
+    return(result)
 
-    # 三年的净利润和市值数据
-    if int(str(day[i])[4:6]) >= 5:
-        temp = w.wsd(stock[tradeday[i]].Data[1], "wgsd_net_inc", "ED-3Y", "2015-09-22", "rptType=1;currencyType=;Period=Y;Fill=Previous;PriceAdj=F").Data
-        #对缺失数据的处理
-        for i in range(np.shape(temp)[0]):
-            temp1 = temp[i]
-            for j in range(len(temp1)):
-                if np.isnan(temp1[-(j+1)]):
-                    temp1[-(j+1)] = temp1[-j]
-        profit = map(lambda x:sum(x[0:3]),temp)
-        temp = w.wsd(stock[tradeday[i]].Data[1], "ev", "ED-3Y", "2015-09-22", "Period=Y;Fill=Previous;PriceAdj=F").Data
-        #对缺失数据的处理
-        for i in range(np.shape(temp)[0]):
-            temp1 = temp[i]
-            for j in range(len(temp1)):
-                if np.isnan(temp1[-(j+1)]):
-                    temp1[-(j+1)] = temp1[-j]
-        ev = map(lambda x:sum(x[0:3]),temp)
-        ETP3 = map(lambda x,y:x/y,profit,ev)
+
+
+def getData(tradeday, stock):
+    # 获取各种因子的数据
+    beta = getFactor(tradeday, stock, 'new_beta', 'beta')
+    rstr = getFactor(tradeday, stock, 'rstr_fuquan', 'rstr')
+    lncap = getFactor(tradeday, stock, 'new_size', 'size')
+    epibs = getFactor(tradeday, stock, 'west_eps', 'west_eps_ftm')
+    etop = getFactor(tradeday, stock, 'newey_ep', 'etop')
+    dastd = getFactor(tradeday, stock, 'dastd_fuquan', 'dastd')
+    cmra = getFactor(tradeday, stock, 'cmra_fuquan', 'cmra')
+    hsigma = getFactor(tradeday, stock, 'new_hsigma', 'hsigma')
+    # sgro egro
+    if(int(tradeday[5:7])>=5):
+        Year = tradeday[0:4]
     else:
-        temp = w.wsd(stock[tradeday[i]].Data[1], "wgsd_net_inc", "ED-4Y", "2015-09-22", "rptType=1;currencyType=;Period=Y;Fill=Previous;PriceAdj=F")
-        #对缺失数据的处理
-        for i in range(np.shape(temp)[0]):
-            temp1 = temp[i]
-            for j in range(len(temp1)):
-                if np.isnan(temp1[-(j+1)]):
-                    temp1[-(j+1)] = temp1[-j]
-        profit = map(lambda x:sum(x[0:3]),temp)
-        temp = w.wsd(stock[tradeday[i]].Data[1], "ev", "ED-4Y", "2015-09-22", "Period=Y;Fill=Previous;PriceAdj=F")
-        #对缺失数据的处理
-        for i in range(np.shape(temp)[0]):
-            temp1 = temp[i]
-            for j in range(len(temp1)):
-                if np.isnan(temp1[-(j+1)]):
-                    temp1[-(j+1)] = temp1[-j]
-        ev = map(lambda x:sum(x[0:3]),temp)
-        ETP3 = map(lambda x,y:x/y,profit,ev)
-    data[tradeday[i]].append(ETP3)
-    
-    # 获取前收盘价，算取1、3、6、12个月收益率
-    data[tradeday[i]].append(w.wss(stock[tradeday[i]].Data[1], "pre_close", "tradeDate=20150923;priceAdj=F;cycle=D"))
-    data[tradeday[i]].append(w.wss(stock[tradeday[i]].Data[1], "pre_close", "tradeDate=20150923;priceAdj=F;cycle=D"))
-    data[tradeday[i]].append(w.wss(stock[tradeday[i]].Data[1], "pre_close", "tradeDate=20150923;priceAdj=F;cycle=D"))
-    data[tradeday[i]].append(w.wss(stock[tradeday[i]].Data[1], "pre_close", "tradeDate=20150923;priceAdj=F;cycle=D"))
+        Year = str(int(tradeday[0:4])-1)
 
-    # 换手率，days为时间
-    data[tradeday[i]].append(w.wss(stock[tradeday[i]].Data[1], "turn_nd", "days=-30;tradeDate=20150922"))
-    data[tradeday[i]].append(w.wss(stock[tradeday[i]].Data[1], "turn_nd", "days=-60;tradeDate=20150922"))
-    data[tradeday[i]].append(w.wss(stock[tradeday[i]].Data[1], "turn_nd", "days=-180;tradeDate=20150922"))
-    data[tradeday[i]].append(w.wss(stock[tradeday[i]].Data[1], "turn_nd", "days=-360;tradeDate=20150922"))
+    sql1 = "SELECT %s FROM %s WHERE Year = '%s' and SecuCode = %s" % ('growth_cagr_tr', 'growth_cagr', Year, '%s')
+    sql2 = "SELECT %s FROM %s WHERE Year = '%s' and SecuCode = %s" % ('growth_cagr_netprofit', 'growth_cagr', Year, '%s')
+    sgro = []
+    egro = []
+    for item in stock:
+        cur.execute(sql1, item)
+        temp1 = cur.fetchone()
+        if temp1 is None:
+            sgro.append(temp1)
+        else:
+            sgro.append(temp1[0])
+        cur.execute(sql2, item)
+        temp2 = cur.fetchone()
+        if temp2 is None:
+            egro.append(temp2)
+        else:
+            egro.append(temp2[0])
+    # egib egib_s
+    egib = getFactor(tradeday, stock, 'west_netprofit', 'west_netprofit_yoy')
+    egib_s =
 
-    # 区间最高价，区间最低价
-    data[tradeday[i]].append(w.wss(stock[tradeday[i]].Data[1], "high_per", "startDate=20150823;endDate=20150923;priceAdj=F"))
-    data[tradeday[i]].append(w.wss(stock[tradeday[i]].Data[1], "low_per", "startDate=20150823;endDate=20150923;priceAdj=F"))
-
-    # 获取2个月波动率
-    data[tradeday[i]].append(w.wss(stock[tradeday[i]].Data[1], "stdevr", "startDate=20150823;endDate=20150923;period=2;returnType=1"))
-
-    # 股票beta因子
-    data[tradeday[i]].append(w.wss(stock[tradeday[i]].Data[1], "beta", "startDate=20150823;endDate=20150923;period=2;returnType=1;index=000001.SH"))
+    btop = getFactor(tradeday, stock, 'value', 'btop')       #取出的数据有0，数据格式问题
+    mlev = getFactor(tradeday, stock, 'new_leverage_mlev', 'mlev')
+    dtoa = getFactor(tradeday, stock, 'new_leverage_dtoa', 'dtoa')
+    blev = getFactor(tradeday, stock, 'new_leverage_blev', 'blev')
+    stom = getFactor(tradeday, stock, 'new_liquidity', 'stom')
+    # stoq stoa
 
 
 
 
 
+
+
+    #
+    stock = list(map(lambda x: x[0], stock[tradeday]))
         
